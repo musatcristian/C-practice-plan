@@ -1,0 +1,6 @@
+- Explain the purpose of compilation, assembly and linking at a high level.
+- Build a multi-file C program from object files.
+- Explain what header files provide and why include guards matter.
+- Write a basic Makefile with correct dependencies.
+- Use GDB to diagnose a reproducible failure.
+- Run automated tests and rebuild the project from a clean state.
