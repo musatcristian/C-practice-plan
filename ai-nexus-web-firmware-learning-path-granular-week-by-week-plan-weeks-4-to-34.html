@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firmware learning path: granular plan</title>
+<style>
+@font-face{font-family:"Gellix";src:url("https://ai-industrialization.cognizant.com/public/assets/fonts/Gellix-Regular_R.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Gellix";src:url("https://ai-industrialization.cognizant.com/public/assets/fonts/Gellix-SemiBold_R.woff2") format("woff2");font-weight:600;font-display:swap}
+:root{--cog-navy:#000048;--cog-ink-2:#3D3D5C;--cog-paper:#FFFFFF;--cog-paper-2:#F4F6FA;--cog-rule:#D0D0CE;--cog-link:#2F78C4;--cog-accent-soft:#DEEBF8;--cog-cyan:#26EFE9;--cog-font:"Gellix","Arial",Helvetica,sans-serif}
+body{margin:0;font-family:var(--cog-font);color:var(--cog-navy);background:var(--cog-paper);line-height:1.5}
+header{background:var(--cog-navy);color:#fff;padding:20px 32px}
+header img{display:block;margin-bottom:14px}
+header h1{margin:0;font-size:23px;font-weight:600;letter-spacing:-0.01em}
+header p{margin:6px 0 0;font-size:13.5px;color:var(--cog-accent-soft)}
+main{max-width:1040px;margin:0 auto;padding:26px 32px 64px}
+h2{font-size:18px;font-weight:600;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--cog-navy)}
+p,li,td,th{font-size:13.5px}
+p,li{color:var(--cog-ink-2)}
+strong{color:var(--cog-navy)}
+code{font-family:Consolas,Monaco,monospace;font-size:12.5px;background:var(--cog-paper-2);padding:1px 4px;border-radius:2px;color:var(--cog-navy)}
+table{width:100%;border-collapse:collapse;margin:10px 0 22px}
+th{text-align:left;background:var(--cog-navy);color:#fff;padding:8px 10px;font-weight:600;font-size:13px}
+td{padding:9px 10px;border-bottom:1px solid var(--cog-rule);color:var(--cog-ink-2);vertical-align:top}
+tr:nth-child(even) td{background:var(--cog-paper-2)}
+.wk{white-space:nowrap;font-weight:600;color:var(--cog-navy);width:64px}
+.lbl{display:block;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--cog-link);margin-bottom:2px}
+.cal{background:#fff;border-left:3px solid var(--cog-link);padding:12px 16px;margin:16px 0}
+.cal p{margin:0;color:var(--cog-navy);font-size:13.5px}
+.gate{background:var(--cog-navy);color:#fff;padding:13px 18px;margin:18px 0}
+.gate p{margin:3px 0;color:#fff;font-size:13.5px}
+.gate strong{color:var(--cog-cyan)}
+ol,ul{padding-left:20px;margin:6px 0}
+li{margin:3px 0}
+.note{font-size:12.5px;color:#6a6a80;border-top:1px solid var(--cog-rule);margin-top:34px;padding-top:14px}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://ai-industrialization.cognizant.com/public/assets/logos/cog_prim_lg_hrz_r_rgb_rev_2023.svg" alt="Cognizant" height="32">
+  <h1>Firmware learning path: granular plan, weeks 4 to 34</h1>
+  <p>Cristian Musat · exact exercises, per-week pass/fail tests, document sections to read · 4 November 2026</p>
+</header>
+<main>
+
+<h2>Assumptions and reading key</h2>
+<p><strong>Board assumption.</strong> An STM32 Nucleo-64 class board with a Cortex-M4 (for example a NUCLEO-F411RE) or Cortex-M7. If you choose a different family, every ST document reference below is replaced by the equivalent for your part; the <em>section names</em> stay the same, which is why they are given as names. A Zephyr-supported board is strongly preferred, because Phase 6 loses a week otherwise.</p>
+<table>
+  <tr><th style="width:24%">Key</th><th>Document (all free from the vendor unless marked)</th></tr>
+  <tr><td>DATASHEET</td><td>Your part's datasheet. The sections you need are "Features", "Memory mapping" and, later, pin and alternate-function tables.</td></tr>
+  <tr><td>RM</td><td>Your part family's Reference Manual (for F4: RM0090). Sections are named identically across families: "Memory and bus architecture", "RCC", "GPIO", "EXTI", "NVIC", "USART", "SPI", "I2C", "bxCAN"/"FDCAN", "Independent watchdog", "Debug support".</td></tr>
+  <tr><td>PM0214</td><td>STM32 Cortex-M4 MCUs and MPUs programming manual. Chapters: processor modes and privilege, exceptions and the vector table, fault handling, SysTick, DWT, SCB registers.</td></tr>
+  <tr><td>DDI0403E</td><td>ARMv7-M Architecture Reference Manual. Chapter B1 (system level architecture, memory map, exceptions), B3 (fault handling), C1 (debug).</td></tr>
+  <tr><td>DUI0555</td><td>Cortex-M4 Devices Generic User Guide: NVIC, SysTick, SCB, DWT, ITM register descriptions.</td></tr>
+  <tr><td>UM1724</td><td>STM32 Nucleo-64 boards user manual: jumper configuration, ST-LINK, virtual COM port wiring.</td></tr>
+  <tr><td>LD</td><td>GNU <code>ld</code> manual, "Linker Scripts" chapter, plus <code>readelf</code> and <code>objdump</code> sections of the binutils manual.</td></tr>
+  <tr><td>ZEPHYR</td><td>Zephyr documentation: Getting Started, "Build with west", Devicetree guide, Kconfig guide, Kernel Services, Board Porting Guide, Memory Management, Thread Analyzer.</td></tr>
+  <tr><td>FREERTOS</td><td><em>Mastering the FreeRTOS Real Time Kernel</em> (free PDF): chapters on task management, queues, semaphores and mutexes, and priority inversion.</td></tr>
+  <tr><td>LIU</td><td>Liu and Layland, "Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment" (1973). Short paper, read it twice.</td></tr>
+  <tr><td>BUTTAZZO</td><td><em>Hard Real-Time Computing Systems</em>, chapters on fixed-priority scheduling and response-time analysis.</td></tr>
+  <tr><td>UM10204</td><td>NXP I2C-bus specification and user manual: START/STOP conditions, addressing, clock stretching, arbitration.</td></tr>
+  <tr><td>CAN</td><td>Bosch CAN 2.0B specification (free). ISO 11898-1 is the normative standard but is paywalled; say so in your notes rather than pretending to have read it.</td></tr>
+  <tr><td>KERNEL</td><td>kernel.org documentation: <code>driver-api</code>, "Locking", "Unreliable Guide to Locking", "Submitting patches", "Coding style", KCSAN, plus <em>Linux Device Drivers</em> 3rd ed. (free) chapters 2, 3 and 5.</td></tr>
+  <tr><td>CERT/MISRA</td><td>SEI CERT C Coding Standard (relevant rules named per week) and MISRA C:2012 (paywalled; the directive and rule numbers are enough for practice).</td></tr>
+</table>
+
+<div class="cal"><p><strong>Rule that governs every week.</strong> An exercise is not done until its acceptance test passes and the evidence is committed. If you complete the exercises but the test fails, the week is not finished and you do not move on.</p></div>
+
+<h2>Phase 4 · Weeks 4 to 7 · Production C</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">4</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Rebuild your weeks 1 to 3 code with <code>-std=c11 -Wall -Wextra -Werror -Wconversion -Wshadow -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wundef -Wdouble-promotion</code>.</li>
+        <li>Fix every diagnostic. You may lower a flag, but only with a committed one-line justification naming the reason.</li>
+        <li>Add <code>clang-tidy</code> with the <code>bugprone-*</code>, <code>cert-*</code> and <code>readability-*</code> families, and fix what it finds.</li>
+        <li>Write a <code>Makefile</code> with <code>all</code>, <code>check</code>, <code>clean</code> targets, and a <code>.gitignore</code> that excludes build output.</li>
+      </ol>
+      <span class="lbl">Read</span> GCC "Warning Options" chapter; clang-tidy checks reference (the families you enabled); CERT C rules INT30-34, MEM30-33 as an index of what is coming.</td>
+    <td>From a fresh clone on a machine that has never built the project, <code>make check</code> exits 0 with zero warnings. The count of suppressed checks is three or fewer, each justified.</td>
+  </tr>
+  <tr>
+    <td class="wk">5</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Refactor the sensor registry into a library with an opaque handle: <code>sensor_registry_create</code>, <code>_destroy</code>, <code>_add</code>, <code>_find</code>, <code>_list</code>.</li>
+        <li>Replace every <code>exit()</code> and <code>assert()</code> in library code with returned error codes from a single enum.</li>
+        <li>Write a test harness (Unity, or 60 lines of your own) with at least one test per public function and <strong>one test per failure path</strong>, using a function-pointer allocator so you can inject <code>malloc</code> failure.</li>
+        <li>Add an <code>examples/</code> program that uses only the public header.</li>
+      </ol>
+      <span class="lbl">Read</span> Jens Gustedt, <em>Modern C</em>, chapters on interfaces, linkage and opaque types; CERT C DCL and MEM rules; Linux kernel <code>coding-style</code> document for naming and error-handling conventions (as reference, not gospel).</td>
+    <td><code>make test</code> from clean passes. Every public function has a failure-path test. <code>grep -rn "exit(\|assert(" lib/ include/</code> returns nothing. The examples program compiles against the public header only.</td>
+  </tr>
+  <tr>
+    <td class="wk">6</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Build three variants: <code>-fsanitize=address</code>, <code>-fsanitize=undefined</code>, and both together. Run the full test suite under each.</li>
+        <li>Write a libFuzzer harness for the input parser. Run it for a total of at least 10 minutes of wall clock.</li>
+        <li>For every crash found: minimise the input, commit it as a regression test, and show the test failing before the fix and passing after.</li>
+      </ol>
+      <span class="lbl">Read</span> libFuzzer documentation (llvm.org/docs/LibFuzzer); AddressSanitizer and UBSan reference pages; GCC instrumentation options; CERT C MEM30-31.</td>
+    <td>At least one genuine crash found by fuzzing, with a four-line evidence block committed: the minimised input, the pre-fix output, the fix, the post-fix output. A suite that passes only because it never exercises the parser is a fail.</td>
+  </tr>
+  <tr>
+    <td class="wk">7</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Pick a real issue in Zephyr or an embedded utility library. Start from labelled good-first issues; fix; submit a PR following their contribution rules.</li>
+        <li>Ask one colleague at work to review your registry and give you written feedback. Do not defend, just record.</li>
+        <li>Write <code>REVIEW.md</code>: what reviewers said, what you changed, what you disagreed with and why.</li>
+      </ol>
+      <span class="lbl">Read</span> Zephyr <code>CONTRIBUTING.rst</code> and commit-message guidelines; the subsystem maintainer's review comments, carefully.</td>
+    <td>One PR merged or reviewed with substantive comments, plus <code>REVIEW.md</code> containing at least three pieces of external feedback you acted on. No PR and no review means the week repeats.</td>
+  </tr>
+</table>
+
+<h2>Phase 5 · Weeks 8 to 11 · Bare-metal bring-up</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">8</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>From DATASHEET "Memory mapping", write down flash origin, size, RAM origin, size by hand before touching the toolchain.</li>
+        <li>Write the linker script yourself: <code>MEMORY</code> with FLASH and RAM, <code>ENTRY(Reset_Handler)</code>, <code>_estack</code> at top of RAM, and <code>SECTIONS</code> placing <code>.isr_vector</code>, <code>.text</code>, <code>.rodata</code>, <code>.data</code> with <strong>separate LMA in flash and VMA in RAM</strong>, <code>._user_heap_stack</code>, and <code>.bss</code> with <code>NOLOAD</code>.</li>
+        <li>Symbols <code>_sidata</code>, <code>_sdata</code>, <code>_edata</code>, <code>_sbss</code>, <code>_ebss</code>. Build with <code>-Map=build/firmware.map</code>.</li>
+        <li>Inspect with <code>readelf -S</code>, <code>readelf -l</code>, <code>objdump -h</code>, and read the map file.</li>
+      </ol>
+      <span class="lbl">Read</span> LD "Linker Scripts" (MEMORY, SECTIONS, VMA/LMA, AT&gt;, NOLOAD, KEEP); DATASHEET "Memory mapping"; RM "Memory and bus architecture"; DDI0403E B1.4 (memory map and the initial vector table address).</td>
+    <td>Three committed proofs: (a) <code>readelf -S</code> showing sections at the datasheet addresses; (b) <code>readelf -l</code> showing <code>.data</code> with a load address in flash and a different virtual address in RAM; (c) a <code>NOTES.md</code> paragraph explaining, in your words, why <code>.data</code> needs two addresses and <code>.bss</code> needs none.</td>
+  </tr>
+  <tr>
+    <td class="wk">9</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Write <code>startup.c</code> (or <code>.s</code>) with <code>Reset_Handler</code>: copy from <code>_sidata</code> to <code>_sdata.._edata</code>, zero <code>_sbss.._ebss</code>, call <code>main</code>, and an infinite loop if <code>main</code> returns.</li>
+        <li>Weak default handlers for every exception, all aliasing a <code>Default_Handler</code> that loops.</li>
+        <li>Make <code>main</code> prove it ran: toggle a GPIO at register level, or write one character with a register-level polled UART.</li>
+      </ol>
+      <span class="lbl">Read</span> PM0214 chapter "Exceptions" (vector table layout, stacking, the initial SP/PC fetch); DDI0403E B1.5; RM "GPIO" register descriptions and "RCC" AHB/APB enable registers; UM1724 for the LED pin and the virtual COM port pins.</td>
+    <td>Board visibly blinks or transmits with no HAL and no IDE project file. Disassembly (<code>objdump -d</code>) shows the copy loop reading <code>_sidata</code>. <code>readelf</code> word 0 of <code>.isr_vector</code> equals <code>_estack</code> and word 1 equals <code>Reset_Handler</code>.</td>
+  </tr>
+  <tr>
+    <td class="wk">10</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Enable the GPIO clock via the RCC register, set MODER/OTYPER/OSPEEDR/PUPDR, and toggle.</li>
+        <li>Configure SysTick for a 1 ms tick and toggle an LED from the handler at exactly 1 Hz. Then do the same with a different peripheral's EXTI line and a button.</li>
+        <li>Enable the interrupt in the NVIC with an explicit priority. Change the priority and record what changes.</li>
+        <li>For every register you touch, cite the register field name from RM in a comment.</li>
+      </ol>
+      <span class="lbl">Read</span> RM "RCC" (enable registers, clock tree), "GPIO" (all register descriptions), "EXTI", "NVIC"; PM0214 SysTick chapter; DUI0555 NVIC and SysTick register descriptions.</td>
+    <td>LED toggles at 1 Hz from the interrupt with <code>main</code> in an empty loop. A committed register table: register, field, value, and the RM section it came from. Anyone reading it can reproduce the configuration without your code.</td>
+  </tr>
+  <tr>
+    <td class="wk">11</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Induce three distinct faults: a write through a null pointer, an unaligned access through a packed-struct pointer, and an invalid instruction via a bad function pointer.</li>
+        <li>Write <code>HardFault_Handler</code> in C that reads the stacked frame (r0-r3, r12, lr, pc, xPSR) and either transmits it or latches it to a known RAM address you inspect in the debugger.</li>
+        <li>Decode CFSR, HFSR, MMFAR and BFAR for each fault and map the stacked PC back to a source line with <code>addr2line -e build/firmware.elf</code>.</li>
+      </ol>
+      <span class="lbl">Read</span> PM0214 fault-handling chapter and the SCB register descriptions; DDI0403E B3.2 (fault types and escalation); Joseph Yiu, <em>Definitive Guide to Cortex-M</em>, fault-handling chapter.</td>
+    <td>A committed table with one row per fault: fault type, CFSR bit set, stacked PC, <code>addr2line</code> file:line, and your one-sentence explanation. Three faults, three correctly identified source lines.</td>
+  </tr>
+</table>
+
+<h2>Phase 6 · Weeks 12 to 17 · RTOS and timing</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">12</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Install the Zephyr SDK and <code>west</code>; build and flash <code>hello_world</code> for your board.</li>
+        <li>Build <code>blinky</code> and change it to a different LED through the devicetree alias only, touching no C.</li>
+        <li>Read <code>build/zephyr/zephyr.dts</code> and locate your board's <code>.dts</code> in the tree. Diff it against the generated one.</li>
+        <li>Write <code>BRINGUP.md</code> comparing your Phase 5 startup code against Zephyr's port: who provides the vector table, who sets the stack, where <code>main</code> is called from.</li>
+      </ol>
+      <span class="lbl">Read</span> ZEPHYR Getting Started; "Build with west"; Devicetree guide (bindings, aliases, overlays); Kconfig guide; Board Porting Guide.</td>
+    <td>Two applications running on the board. <code>BRINGUP.md</code> answers all three questions correctly and names the file in Zephyr where the C runtime init happens.</td>
+  </tr>
+  <tr>
+    <td class="wk">13</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Three threads at priorities 2, 5 and 8. High-priority sleeps on a semaphore; low-priority holds a resource.</li>
+        <li>Create a genuine priority inversion with a <code>k_sem</code> used as a lock, and measure it.</li>
+        <li>Fix it with <code>k_mutex</code> (priority inheritance) and measure again.</li>
+        <li>Add an ISR that posts to a <code>k_msgq</code> consumed by a thread. Explain why the queue is safe and a bare global is not.</li>
+      </ol>
+      <span class="lbl">Read</span> ZEPHYR Kernel Services: threads, scheduling, synchronization, data passing, interrupts; FREERTOS chapters on queues and mutexes (for the contrasting API and the inversion discussion).</td>
+    <td>Two measured numbers for the same scenario, before and after the mutex, with the mechanism explained. A queue-based ISR handoff that works, plus one paragraph on why the global-variable version is undefined behaviour.</td>
+  </tr>
+  <tr>
+    <td class="wk">14</td>
+    <td><span class="lbl">Exercises (Gate week)</span>
+      <ol>
+        <li>Instrument: GPIO high at ISR entry, low at ISR exit; GPIO high at task wake, low at task completion. Capture at least 1000 transitions on the logic analyser.</li>
+        <li>Cross-check in code using DWT-&gt;CYCCNT with <code>CoreDebug-&gt;DEMCR</code> trace enable, converting cycles to microseconds.</li>
+        <li>Repeat under load: add a low-priority busy thread and a higher-rate interrupt, then report both distributions.</li>
+        <li>Write <code>LATENCY.md</code>: deadline, method, N, worst case, median, jitter, and the conditions under which the number is valid.</li>
+      </ol>
+      <span class="lbl">Read</span> PM0214 DWT chapter; DDI0403E C1 (debug and trace); DUI0555 DWT and DEMCR; Zephyr timing and <code>k_cycle_get_32</code> documentation.</td>
+    <td><strong>Gate 1.</strong> <code>LATENCY.md</code> exists with a defensible worst case and a stated method. Both measurement approaches agree within a factor you can explain. If you cannot produce this, stop the plan and keep the full stack base.</td>
+  </tr>
+  <tr>
+    <td class="wk">15</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Compute total utilisation for your task set. Compute the rate-monotonic bound for n tasks and compare.</li>
+        <li>Do a response-time analysis per task, accounting for blocking and ISR interference.</li>
+        <li>State every assumption (zero overhead, no cache effects, no priority inversion) and say which ones your measurements contradict.</li>
+      </ol>
+      <span class="lbl">Read</span> LIU (whole paper); BUTTAZZO fixed-priority scheduling and response-time analysis chapters.</td>
+    <td>A written analysis with a clear conclusion. "Not provably schedulable, and here is the observed margin" is an acceptable and honest answer. "Schedulable" with no arithmetic shown is not.</td>
+  </tr>
+  <tr>
+    <td class="wk">16</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Remove all dynamic allocation. Configure fixed-size pools or static buffers. Disable the Zephyr heap (<code>CONFIG_HEAP_MEM_POOL_SIZE=0</code>).</li>
+        <li>Measure per-thread stack high-water marks with the thread analyzer, and with a fill-pattern (<code>0xA5</code>) method as a cross-check.</li>
+        <li>Resize stacks with at least 25 percent margin and justify the number.</li>
+      </ol>
+      <span class="lbl">Read</span> ZEPHYR Memory Management and Thread Analyzer; CERT C rules on dynamic memory (MEM30-33) and MISRA C Directive 4.12 (dynamic memory shall not be used).</td>
+    <td>Zero dynamic allocation, proven by <code>grep</code> and by the heap configuration. A stack table: thread, high-water mark, allocated, margin. All margins at or above 25 percent.</td>
+  </tr>
+  <tr>
+    <td class="wk">17</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Add an independent watchdog with a defined refresh policy and reset-cause capture at boot.</li>
+        <li>Deliberately hang a thread and prove recovery, recording the reset count.</li>
+        <li>Run <code>clang-tidy</code> with MISRA-adjacent checks over the firmware and justify every deviation.</li>
+        <li>Add defensive validation to every externally sourced input.</li>
+      </ol>
+      <span class="lbl">Read</span> RM "Independent watchdog"; Zephyr watchdog API; MISRA C:2012 Dir 4.1, 4.7 and Rules 17.7, 21.3 (the ones you will actually violate).</td>
+    <td>Watchdog demonstrably recovers from a hang, evidenced by a reset count and a boot log. Zero unjustified MISRA deviations. Every parser entry point rejects at least one malformed input in a test.</td>
+  </tr>
+</table>
+
+<div class="gate">
+  <p><strong>Gate 1 · end of week 14.</strong> <strong>Pass:</strong> a measured worst-case ISR-to-task latency with a stated method, and you found the work absorbing. <strong>Stop:</strong> no measurement exists, or you did not enjoy it. Do not buy the Linux board.</p>
+</div>
+
+<h2>Phase 7 · Weeks 18 to 20 · Protocols at the wire</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">18</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Pick one real I2C sensor and one real SPI device. Read the register map from the datasheet and write the identification-read as your first transaction.</li>
+        <li>Implement the init sequence and read a measurement, both from scratch, then again through the RTOS driver model.</li>
+        <li>Decode both buses on the logic analyser: addresses, ACK/NACK, clock stretching on I2C, mode and bit order on SPI.</li>
+        <li>Draw your captured timing next to the datasheet's timing diagram and annotate the differences.</li>
+      </ol>
+      <span class="lbl">Read</span> UM10204 sections on START/STOP, addressing, ACK, clock stretching, arbitration; your sensor datasheet's register map and timing table; RM "I2C" and "SPI" chapters; the device's datasheet timing characteristics.</td>
+    <td>Two decoded captures committed, each with an annotated timing comparison against the datasheet. A byte-level commentary: what each byte means. A capture you cannot explain is a fail.</td>
+  </tr>
+  <tr>
+    <td class="wk">19</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Compute bit timing by hand for your target bitrate from APB clock, prescaler, BS1, BS2 and SJW, and verify on the analyser.</li>
+        <li>Send and receive between two nodes, or loopback with a simulated peer. Configure acceptance filters and prove a filtered frame is dropped.</li>
+        <li>Force an error state and observe error counters incrementing toward bus-off, then recover.</li>
+        <li>Write one page on how CAN FD differs and why automotive is moving to it.</li>
+      </ol>
+      <span class="lbl">Read</span> Bosch CAN 2.0B specification (framing, arbitration, error handling, fault confinement); RM "bxCAN"/"FDCAN" chapter; note in your write-up that ISO 11898-1 is paywalled and that you worked from the Bosch spec.</td>
+    <td>Captured frames with correct bit timing verified against your hand calculation. Evidence of a filter dropping a frame. A bus-off occurred and recovered, with the counter values recorded.</td>
+  </tr>
+  <tr>
+    <td class="wk">20</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Build an image with Yocto or Buildroot for a supported board. Add either a layer with a recipe or a Buildroot package.</li>
+        <li>Write a devicetree overlay from scratch that enables a node and sets a property.</li>
+        <li>Verify on the target in <code>/proc/device-tree</code>, and diff your Linux devicetree approach against Zephyr's.</li>
+      </ol>
+      <span class="lbl">Read</span> Yocto Project Overview and Concepts Manual plus the Dev Manual sections on layers, recipes and BSPs (or the Buildroot manual equivalent); devicetree-specification (readthedocs); kernel <code>devicetree/usage-model</code> doc.</td>
+    <td>A reproducible image (same commit, same command, same result), booting, with your overlay node visible and its property readable. A pinned configuration file committed.</td>
+  </tr>
+</table>
+
+<h2>Phase 8 · Weeks 21 to 26 · Firmware to Linux boundary</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">21</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Write a loadable module: <code>module_init</code>/<code>module_exit</code>, <code>alloc_chrdev_region</code>, <code>cdev_add</code>, a <code>file_operations</code> with open/read/write/release, and <code>copy_to_user</code>/<code>copy_from_user</code>.</li>
+        <li>Write a userspace program that exercises it. Handle every error path in the module and unwind correctly.</li>
+        <li>Build out of tree against your board's kernel headers with a two-target Makefile.</li>
+      </ol>
+      <span class="lbl">Read</span> KERNEL <code>driver-api</code> (char devices, ioctl); <em>Linux Device Drivers</em> 3rd ed. chapters 2 and 3; kernel <code>coding-style</code>.</td>
+    <td>Insert, exercise, remove, and a clean <code>dmesg</code> with no warnings. Unload leaves no reserved major, no leaked memory (check with the kernel's own leak reporting if available).</td>
+  </tr>
+  <tr>
+    <td class="wk">22</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Two threads sharing a buffer with no lock. Demonstrate the race, then detect it with KCSAN if your kernel supports it.</li>
+        <li>Fix with a mutex, then a spinlock, and write down which is correct in which context and why.</li>
+        <li>Move work out of interrupt context with a workqueue or a threaded IRQ handler.</li>
+      </ol>
+      <span class="lbl">Read</span> KERNEL "Locking" and "Unreliable Guide to Locking"; KCSAN documentation; <em>LDD3</em> chapter 5.</td>
+    <td>A race reproduced at least once with evidence, a fix, and a written explanation of sleeping versus atomic context. The explanation must be correct about why a mutex cannot be used in an IRQ handler.</td>
+  </tr>
+  <tr>
+    <td class="wk">23</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Find one real defect in a subsystem you actually touched. Run <code>checkpatch.pl</code>, <code>sparse</code>, and read the TODO files.</li>
+        <li>Fix it and submit with <code>git send-email</code> following the subsystem's rules exactly.</li>
+        <li>Respond to review. Record everything.</li>
+      </ol>
+      <span class="lbl">Read</span> KERNEL "Submitting patches", "Coding style", MAINTAINERS, and your subsystem's own documentation file.</td>
+    <td>One patch sent upstream. Reviewer feedback received and answered is a pass. A well-argued rejection is also a pass. A patch never sent is a fail.</td>
+  </tr>
+  <tr>
+    <td class="wk">24</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Run on a PREEMPT_RT kernel and on a non-RT kernel. Run <code>cyclictest -m -p95 -i200 -d</code> for at least 15 minutes on each, under load.</li>
+        <li>Interpret the maximum, not the average. Identify what dominates the tail on your board (SMI, power management, driver latency).</li>
+        <li>Tune one thing (IRQ affinity or a threaded IRQ priority) and measure the effect.</li>
+      </ol>
+      <span class="lbl">Read</span> kernel documentation on RT-mutex and PREEMPT_RT; <code>rt-tests</code> README and <code>cyclictest</code> man page; the PREEMPT_RT wiki page on configuration basics.</td>
+    <td>Four distributions (RT and non-RT, idle and loaded) with max values, plus a written statement of what dominates the tail and what you changed to improve it. Average latency reported without a maximum is a fail.</td>
+  </tr>
+  <tr>
+    <td class="wk">25</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Define a frame format: SOF, length, sequence, payload, CRC16. Write the specification first, before the code.</li>
+        <li>Implement both ends: MCU firmware and Linux userspace.</li>
+        <li>Inject errors: corrupt a byte, truncate a frame, duplicate one, send garbage. Handle each defined way.</li>
+        <li>Capture the exchange on the analyser.</li>
+      </ol>
+      <span class="lbl">Read</span> Your own specification (it is now a real document); a CRC reference for CRC-16/CCITT; the CERT rules on validating externally sourced data.</td>
+    <td>Two devices exchanging frames, a specification document, a capture, and four error cases each handled and evidenced. This repository is the one you will show people.</td>
+  </tr>
+  <tr>
+    <td class="wk">26</td>
+    <td><span class="lbl">Exercises</span>
+      <ol>
+        <li>Host-side unit tests for the protocol logic (parse and build, no hardware needed).</li>
+        <li>A hardware-in-the-loop test script that runs the error cases automatically.</li>
+        <li>CI on a clean runner building both halves.</li>
+      </ol>
+      <span class="lbl">Read</span> Your CI provider's runner documentation for hardware you can attach, or design the HIL test to run only locally and gate the rest in CI.</td>
+    <td><code>make verify</code> from a clean clone passes end to end with no manual step, in CI, plus locally with hardware attached.</td>
+  </tr>
+</table>
+
+<div class="gate">
+  <p><strong>Gate 2 · end of week 26.</strong> <strong>Pass:</strong> you can explain a register-level or kernel-level bug you fixed, and <code>make verify</code> passes from clean. <strong>Not yet:</strong> repeat weeks 21 to 23 on a harder subsystem. Do not start positioning on a thin artefact.</p>
+</div>
+
+<h2>Phase 9 · Weeks 27 to 30 · The reviewable artefact</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">27</td>
+    <td><span class="lbl">Exercises</span> Pin the toolchain version and record it in the README. Provide a container or a documented host setup. Reduce build-and-flash to one command. Add a <code>--version</code> output captured into the repo for reproducibility.</td>
+    <td>A machine that has never seen the project builds and flashes it by following the README only. You must actually test this on a second machine or a fresh container.</td>
+  </tr>
+  <tr>
+    <td class="wk">28</td>
+    <td><span class="lbl">Exercises</span> Write the architecture overview, a state or data-flow diagram, the interface specification, the measurement results, and an ADR-style decisions log with at least five entries naming alternatives you rejected and why.</td>
+    <td>A reader can explain your design back to you without asking a question. The decisions log names real trade-offs, not restatements of the code.</td>
+  </tr>
+  <tr>
+    <td class="wk">29</td>
+    <td><span class="lbl">Exercises</span> Audit every peripheral call for a checked return. Add a CI grep or a script that fails the build on an unchecked call. Write a risk list naming at least three things you know are weak.</td>
+    <td>Zero unchecked calls, enforced mechanically. A risk list with three genuine weaknesses, not humble-brags.</td>
+  </tr>
+  <tr>
+    <td class="wk">30</td>
+    <td><span class="lbl">Exercises</span> Write one technical post about a non-obvious bug or trade-off from the project. Publish it where engineers will read it.</td>
+    <td>Published, and at least one substantive comment or question from an engineer who is not you.</td>
+  </tr>
+</table>
+
+<h2>Phase 10 · Weeks 31 to 34 · Positioning and decision</h2>
+<table>
+  <tr><th class="wk">Week</th><th style="width:52%">Exact exercises</th><th>Acceptance test (pass/fail)</th></tr>
+  <tr>
+    <td class="wk">31</td>
+    <td><span class="lbl">Exercises</span> Identify a named internal team with device, automotive, industrial or edge work. Write one page: their problems in their words, your evidence against each, and what you would need to learn on the job.</td>
+    <td>The page is specific enough that it could not be sent to a different team unchanged. If it could, it is a fail and you rewrite it.</td>
+  </tr>
+  <tr>
+    <td class="wk">32</td>
+    <td><span class="lbl">Exercises</span> Talk to that team's lead first, showing the artefact. Then brief Ruben before any formal request. Ask for a six-month rotation or partial allocation, framed as depth transfer at current grade.</td>
+    <td>A named team lead has seen the artefact and given a specific reaction. Your manager was briefed before the request became official.</td>
+  </tr>
+  <tr>
+    <td class="wk">33</td>
+    <td><span class="lbl">Exercises</span> Rehearse defending your latency measurement, your schedulability analysis, and one hardware bug at register level. Practise explaining the seam system in ten minutes. Ask an engineer to challenge you honestly.</td>
+    <td>A rehearsal completed, plus a written list of the questions you could not answer confidently. That list is your revision plan, not a failure.</td>
+  </tr>
+  <tr>
+    <td class="wk">34</td>
+    <td><span class="lbl">Exercises</span> Decide: rotation secured, continue self-directed with a revised plan, or conclude that full stack plus systems awareness is the better position for now. Sketch the next twelve months either way.</td>
+    <td>A written decision with the evidence that drove it and a next-twelve-months sketch. All three outcomes are valid; the failure mode is drifting into none of them.</td>
+  </tr>
+</table>
+
+<h2>Reading load, honestly</h2>
+<p>The reading in this plan is deliberately document-heavy and book-light. Reference manuals are the actual source of truth for firmware and nobody reads them end to end; you read the one chapter your register lives in, and you cite the section. Total book reading across 31 weeks is under 400 pages (Gustedt selectively, Yiu's fault chapter, the FreeRTOS kernel chapters, Buttazzo's two chapters, <em>LDD3</em> chapters 2, 3 and 5, plus the Liu paper twice). Everything else is vendor documentation and standards, consulted per week.</p>
+
+<h2>What would make this plan wrong</h2>
+<ul>
+  <li><strong>Weeks 8 to 10 collapse if the board misbehaves.</strong> If the debug probe does not work, stop and fix that first; do not proceed to startup code with an unreliable flash path.</li>
+  <li><strong>Week 23 depends on finding a real defect.</strong> If nothing surfaces, substitute a subsystem documentation improvement that a maintainer accepts. It is weaker evidence but still real.</li>
+  <li><strong>Week 24 needs a board that can run a modern kernel.</strong> If your Linux board is too constrained for PREEMPT_RT work, run cyclictest on a VM or on your workstation and say so explicitly in the write-up rather than faking it.</li>
+  <li><strong>The 6 to 8 hour week assumption.</strong> Weeks 14, 22, 24 and 26 are the heavy ones. If any single week exceeds 10 hours, cut its fourth exercise rather than the acceptance test.</li>
+</ul>
+
+<p class="note">Companion to the 34-week plan. Weeks 1 to 3 remain as the candidate wrote them and are not repeated or replaced here. Document sections are named rather than paginated because reference manual revisions differ. Prepared 4 November 2026.</p>
+
+</main>
+</html>
