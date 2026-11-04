@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bare-metal and RTOS firmware: 34-week learning path</title>
+<style>
+@font-face{font-family:"Gellix";src:url("https://ai-industrialization.cognizant.com/public/assets/fonts/Gellix-Regular_R.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Gellix";src:url("https://ai-industrialization.cognizant.com/public/assets/fonts/Gellix-SemiBold_R.woff2") format("woff2");font-weight:600;font-display:swap}
+:root{--cog-navy:#000048;--cog-ink-2:#3D3D5C;--cog-paper:#FFFFFF;--cog-paper-2:#F4F6FA;--cog-rule:#D0D0CE;--cog-link:#2F78C4;--cog-accent-soft:#DEEBF8;--cog-cyan:#26EFE9;--cog-font:"Gellix","Arial",Helvetica,sans-serif}
+body{margin:0;font-family:var(--cog-font);color:var(--cog-navy);background:var(--cog-paper);line-height:1.5}
+header{background:var(--cog-navy);color:#fff;padding:20px 32px}
+header img{display:block;margin-bottom:14px}
+header h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-0.01em}
+header p{margin:6px 0 0;font-size:14px;color:var(--cog-accent-soft)}
+main{max-width:1000px;margin:0 auto;padding:28px 32px 64px}
+h2{font-size:19px;font-weight:600;margin:36px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--cog-navy)}
+h3{font-size:15px;font-weight:600;margin:22px 0 6px}
+p,li,td,th{font-size:14px}
+p,li{color:var(--cog-ink-2)}
+strong{color:var(--cog-navy)}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th{text-align:left;background:var(--cog-navy);color:#fff;padding:9px 10px;font-weight:600}
+td{padding:9px 10px;border-bottom:1px solid var(--cog-rule);color:var(--cog-ink-2);vertical-align:top}
+tr:nth-child(even) td{background:var(--cog-paper-2)}
+.wk{white-space:nowrap;font-weight:600;color:var(--cog-navy)}
+.phase{margin:26px 0 0;padding:12px 16px;background:var(--cog-paper-2);border-left:4px solid var(--cog-link)}
+.phase p{margin:0;color:var(--cog-navy)}
+.ac{background:#fff;border:1px solid var(--cog-rule);padding:10px 14px;margin:10px 0}
+.ac p{margin:4px 0;font-size:13.5px}
+.gate{background:var(--cog-navy);color:#fff;padding:14px 18px;margin:22px 0}
+.gate p{margin:4px 0;color:#fff;font-size:13.5px}
+.gate strong{color:var(--cog-cyan)}
+.muted{font-size:12.5px;color:#6a6a80}
+.note{font-size:13px;color:#6a6a80;border-top:1px solid var(--cog-rule);margin-top:36px;padding-top:14px}
+ul{padding-left:20px}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://ai-industrialization.cognizant.com/public/assets/logos/cog_prim_lg_hrz_r_rgb_rev_2023.svg" alt="Cognizant" height="32">
+  <h1>Bare-metal and RTOS firmware: a 34-week learning path</h1>
+  <p>Cristian Musat · weeks 4 to 34 · 6 to 8 hours per week · prepared 4 November 2026</p>
+</header>
+<main>
+
+<h2>How to read this plan</h2>
+<ul>
+  <li><strong>Weeks 1 to 3 are yours and are unchanged.</strong> This plan starts at week 4 and assumes those three weeks are done as written. Nothing here overwrites them.</li>
+  <li><strong>Every phase ends in an artefact.</strong> Not a certificate, not a completed course. A repository, a measurement, or a written analysis that another engineer could inspect without you in the room.</li>
+  <li><strong>Time budget is per week, not per phase.</strong> If a phase overruns by two weeks, cut scope inside it rather than dropping the artefact. The artefact is the point.</li>
+  <li><strong>Two gates.</strong> Each is a genuine stop point with a defined test. Stopping is a legitimate result, and cheaper in week 14 than in week 30.</li>
+  <li><strong>Sequencing is fixed.</strong> Phase 4 depends on Phase 3; Phase 5 depends on a board that boots an RTOS you configured. Do not run phases in parallel except where marked optional.</li>
+</ul>
+
+<h2>Objective</h2>
+<p>By week 34 you can show, from artefacts: production-standard C that has been reviewed by people who do not know you; a board brought up from a linker script you wrote; a real-time pipeline with a measured worst-case latency and a defensible methodology; a firmware-to-Linux boundary you have crossed in both directions; and one repository a firmware hiring manager would read as competent rather than enthusiastic. The target position is a lateral move at current grade into a firmware or embedded Linux team, presented as a systems engineer transferring depth.</p>
+
+<h2>Hardware and cost</h2>
+<table>
+  <tr><th style="width:26%">Item</th><th style="width:16%">When</th><th>Why it is required</th></tr>
+  <tr><td>Cortex-M dev board with an onboard debug probe (STM32 Nucleo class, or a first-class Zephyr-supported board)</td><td>Week 4</td><td>Phase 5 cannot be done without it. Choose a board with vendor documentation you can actually read and a Zephyr board page, so later phases are not blocked on a port.</td></tr>
+  <tr><td>USB logic analyser (8 channel, cheap clone is fine)</td><td>Week 12</td><td>Phase 8 and the protocol work in Phase 10. Timing claims without a capture are assertions.</td></tr>
+  <tr><td>Second board capable of Linux (ARM Cortex-A class, or a supported SBC)</td><td>Week 20</td><td>Phase 10. This is the one item to defer if budget is tight until the gate at week 14 is passed.</td></tr>
+  <tr><td>Optional: Linux Foundation Zephyr RTOS Programming (AC6401)</td><td>Week 11 to 12</td><td>Lands exactly on Phase 6. Worth the money only if a training budget covers it; otherwise the phase works without it.</td></tr>
+</table>
+<p class="muted">Budget roughly €100 to €180 for the two boards and the analyser. Ask about a learning budget before self-funding the course.</p>
+
+<div class="phase"><p><strong>Phase 4 · Weeks 4 to 7 · Production C</strong> · you can compile; you have never had your C survive review. This phase fixes that, and it is the most common reason people with your profile get filtered at interview.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">4</td><td>Rebuild weeks 1 to 3 material under a strict build: <code>-std=c11 -Wall -Wextra -Werror -Wconversion -Wshadow</code>, plus <code>clang-tidy</code> with a MISRA-flavoured check set. Fix every warning rather than disabling it.</td><td>Clean build from a fresh clone on a machine that has never seen the repo. Zero warnings, and a one-line justification committed for any suppressed check.</td></tr>
+  <tr><td class="wk">5</td><td>Restructure the week 3 sensor registry into a library plus a thin application: a public header with an opaque handle, error codes returned rather than a process abort, and host-side unit tests.</td><td>Tests run with <code>make test</code> from clean; every public function has at least one failure-path test; no <code>exit()</code> or <code>assert()</code> in library code.</td></tr>
+  <tr><td class="wk">6</td><td>Fuzz and instrument. Run the test binary under ASan and UBSan together; add a simple fuzz harness for the input parser (libFuzzer or AFL, either is fine).</td><td>A fuzz crash found by you, fixed by you, with the failing input committed as a regression test that fails before the fix and passes after.</td></tr>
+  <tr><td class="wk">7</td><td>External review. Submit one small, genuinely useful pull request to an open-source embedded-adjacent project (Zephyr, an RTOS utility library, a small driver). Also ask a colleague at work to review your registry.</td><td>One merged or review-commented PR, plus a written summary of the review feedback you received and what you changed.</td></tr>
+</table>
+
+<div class="phase"><p><strong>Phase 5 · Weeks 8 to 11 · Bare-metal bring-up</strong> · you already write linker scripts. This phase moves that from a claim into a repository with a commit history, on real silicon.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">8</td><td>Get a toolchain you chose (arm-none-eabi-gcc or clang + newlib/picolibc) building for the target. Read the part's memory map from the datasheet and the reference manual, and write the linker script by hand: flash and RAM regions, section placement, the vector table, stack reservation, and the <code>.data</code> load address versus run address.</td><td><code>arm-none-eabi-readelf -S</code> on the ELF shows sections at the addresses the datasheet says, and a committed note explaining each MEMORY region and why the stack sits where it does.</td></tr>
+  <tr><td class="wk">9</td><td>Startup code end to end: <code>Reset_Handler</code>, copy <code>.data</code> from flash to RAM, zero <code>.bss</code>, set the vector table, jump to <code>main</code>. Optionally in assembly, which is worth it once.</td><td>A board that reaches <code>main</code> with a verifiable signal (a GPIO toggle or a UART character) with no vendor HAL and no IDE project involved.</td></tr>
+  <tr><td class="wk">10</td><td>Register-level peripheral work, no HAL: clock enable, GPIO configuration, and one interrupt-driven peripheral of your choice. Write the IRQ handler and the vector entry yourself.</td><td>An interrupt fires and is serviced, with a GPIO toggle or captured analyser edge as proof, and a short written explanation of the NVIC vector lookup and the ISR contract.</td></tr>
+  <tr><td class="wk">11</td><td>Deliberately break it and document it. Introduce a fault (unaligned access, invalid pointer, divide by zero), capture the fault status registers, and write a minimal hard-fault handler that prints the stacked PC and LR.</td><td>A fault handler that identifies the offending instruction address on a real fault, with the captured registers committed and explained.</td></tr>
+</table>
+
+<div class="phase"><p><strong>Phase 6 · Weeks 12 to 17 · RTOS and timing</strong> · the heart of the target role, and the phase almost everyone skips the measurement half of.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">12</td><td>Bring up Zephyr (or FreeRTOS) on your board using its own board support, then write a second, minimal port-aware note: what devicetree contributes, what Kconfig contributes, and where your hand-written startup code and the RTOS's port layer meet.</td><td>A Zephyr or FreeRTOS image running on the board, plus a diagram you drew of how your Phase 5 code relates to the RTOS port.</td></tr>
+  <tr><td class="wk">13</td><td>Concurrency primitives: tasks at different priorities, a message queue for ISR-to-task handoff, a mutex, and a semaphore. Then break it: create a priority inversion and observe it.</td><td>A demonstrated priority inversion, the fix (priority inheritance or better design), and a measurement showing the fix works.</td></tr>
+  <tr><td class="wk">14</td><td><strong>Gate 1.</strong> Build the measurement harness: a GPIO toggle at task entry and exit, captured on the logic analyser, to get ISR-to-task latency and jitter. Run it under load.</td><td>A committed measurement report stating the deadline, the observed worst case, the number of runs, and the conditions. <strong>If you cannot produce this, stop the plan here.</strong></td></tr>
+  <tr><td class="wk">15</td><td>Scheduling theory applied to your own numbers: rate monotonic and fixed-priority analysis on your task set, CPU utilisation, and whether your deadlines are provably met rather than empirically observed.</td><td>A written schedulability analysis for your task set, with the assumptions stated and the conclusion honest (including "not provable, here is why").</td></tr>
+  <tr><td class="wk">16</td><td>Memory discipline without a heap: static allocation, fixed-size pools, stack sizing from a high-water mark, and why <code>malloc</code> is often banned. Measure your real stack usage.</td><td>Removal of all dynamic allocation from the firmware with task stack high-water marks reported and sized with margin.</td></tr>
+  <tr><td class="wk">17</td><td>Safety and robustness habits: MISRA-C awareness on your own code, a watchdog with a documented recovery policy, and a defensive check on every external input.</td><td>A <code>clang-tidy</code> MISRA-adjacent run with zero unjustified deviations, and a watchdog that demonstrably recovers from a deliberate hang.</td></tr>
+</table>
+
+<div class="gate">
+  <p><strong>Gate 1 · end of week 14 (run it, then continue).</strong></p>
+  <p><strong>Pass if:</strong> you have a measured worst-case ISR-to-task latency with a stated method, and you found the work absorbing rather than merely correct.</p>
+  <p><strong>Stop if:</strong> no measurement exists, or you did not enjoy it. Keep the full stack base, which is now stronger rather than eroded, and do not buy the Linux board.</p>
+</div>
+
+<div class="phase"><p><strong>Phase 7 · Weeks 18 to 20 · Protocols at the wire</strong> · the skill that makes you useful on a real product team, and cheaper than any certification at teaching you what firmware teams actually test.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">18</td><td>SPI and I2C properly: read a real device's datasheet, drive it from scratch, decode both on the logic analyser, and produce a timing diagram from your capture next to the one in the datasheet.</td><td>A decoded capture matched against the datasheet timing, with your own byte-level commentary. This is the artefact that proves bench competence.</td></tr>
+  <tr><td class="wk">19</td><td>CAN at the wire level: framing, arbitration, IDs, error handling. Two nodes if you have a second transceiver, or a loopback with a simulated peer. Discussion of CAN FD.</td><td>Frames captured and decoded, an arbitration experiment, and an explanation of how a real system would handle error states.</td></tr>
+  <tr><td class="wk">20</td><td>Cross-compile a Linux image for the second board with Yocto or Buildroot. Add a layer or a recipe. Write a devicetree overlay from scratch.</td><td>An image you built reproducibly, booting, with your overlay applied and a node visible in <code>/proc/device-tree</code>.</td></tr>
+</table>
+
+<div class="phase"><p><strong>Phase 8 · Weeks 21 to 26 · Firmware to Linux boundary</strong> · the bridge profile: you can go downward into the kernel and upward into the application, and you know where the seam belongs.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">21</td><td>Kernel module basics on your board: a loadable module, a character device, <code>read</code>/<code>write</code> or <code>ioctl</code> on it, correct error paths and cleanup.</td><td>A driver loaded on the target with a userspace program talking to it, and a clean unload with no leaked resources.</td></tr>
+  <tr><td class="wk">22</td><td>Concurrency in the kernel: spinlocks, mutexes, sleeping contexts, deferred work, and why a bug here is nondeterministic. Trigger a race and find it.</td><td>A race deliberately introduced and then diagnosed, with the reasoning written down rather than the patch alone.</td></tr>
+  <tr><td class="wk">23</td><td>A small, honest kernel patch: fix something in a subsystem you actually touched, ideally something reported and small. Follow the subsystem's submission process.</td><td>One patch sent upstream with reviewer feedback, or a well-argued explanation of why it was rejected. Either is evidence of real work.</td></tr>
+  <tr><td class="wk">24</td><td>Real-time on Linux: PREEMPT_RT configuration, interrupt threading, and a <code>cyclictest</code> run with interpretation of the latency distribution.</td><td>Latency numbers with an explanation of what dominates them and what a system integrator would tune.</td></tr>
+  <tr><td class="wk">25</td><td>Build the seam: a small end-to-end system where your firmware talks to your Linux application over SPI or UART, with framed messages and a defined protocol.</td><td>Two devices, one protocol, capture evidence, and a written interface specification. This repo is the single best conversation starter you will have.</td></tr>
+  <tr><td class="wk">26</td><td>Test it like a product team would: host-side unit tests for the protocol logic, a hardware-in-the-loop style test, and a CI job that builds both halves on a clean runner.</td><td><code>make verify</code> from clean passes for both halves with no manual steps, and a README a stranger can follow.</td></tr>
+</table>
+
+<div class="gate">
+  <p><strong>Gate 2 · end of week 26.</strong></p>
+  <p><strong>Pass if:</strong> you can explain a bug you fixed at register or kernel level, and the seam system builds and tests from clean.</p>
+  <p><strong>Not yet:</strong> repeat weeks 21 to 23 on a harder subsystem before starting Phase 9. Do not start positioning on a thin artefact.</p>
+</div>
+
+<div class="phase"><p><strong>Phase 9 · Weeks 27 to 30 · The reviewable artefact</strong> · one repository that reads like a working firmware engineer's best month, not like a learner's portfolio.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">27</td><td>Consolidate. Pick the strongest project and make it installable and reproducible: pinned toolchain version, a container or documented environment, one command to build and flash.</td><td>A fresh machine can build and flash it following only the README, with the toolchain version pinned.</td></tr>
+  <tr><td class="wk">28</td><td>Documentation to product standard: architecture overview, a data-flow or state diagram, the interface specification, the measurement results, and a decisions log with the alternatives you rejected and why.</td><td>A reader can explain your design back to you without asking a question, and the decisions log names real trade-offs rather than restating the code.</td></tr>
+  <tr><td class="wk">29</td><td>Harden. Full error handling audit on every peripheral call, watchdog policy, recovery behaviour, and a written risk list of what you know is weak.</td><td>Zero unchecked calls (verified by a script or a grep in CI), and a risk list that names at least three real weaknesses.</td></tr>
+  <tr><td class="wk">30</td><td>Write the narrative: a short technical blog-style post explaining one non-obvious bug or trade-off from the project. Publish it where engineers will see it.</td><td>A published post or internal write-up that a senior engineer would comment on rather than scroll past.</td></tr>
+</table>
+
+<div class="phase"><p><strong>Phase 10 · Weeks 31 to 34 · Positioning and decision</strong> · the plan is not finished until someone with hiring authority has seen the work.</p></div>
+<table>
+  <tr><th class="wk">Week</th><th style="width:44%">Work</th><th>Acceptance criterion</th></tr>
+  <tr><td class="wk">31</td><td>Map your artefacts to a named internal team's actual backlog. One page: their problems in their words, your evidence against each, and what you would need to learn on the job.</td><td>A one-pager specific enough that it could not be sent to a different team unchanged.</td></tr>
+  <tr><td class="wk">32</td><td>Conversations. Team lead first, then your manager (Ruben). Ask for a six-month rotation or a partial allocation, framed as depth transfer at current grade.</td><td>At least one named team lead who has seen the artefact and given you a specific reaction. Your manager briefed before the request becomes official.</td></tr>
+  <tr><td class="wk">33</td><td>Interview readiness: prepare to defend your measurements, your scheduling analysis and one hardware bug at the level of registers. Practice explaining the seam system in ten minutes.</td><td>A rehearsal with an engineer who will tell you the truth, and a written list of the questions you could not answer confidently.</td></tr>
+  <tr><td class="wk">34</td><td>Decide: rotation secured, continue self-directed with a revised plan, or conclude that the full stack base plus systems awareness is the better position for now. All three are valid.</td><td>A written decision with the evidence that drove it, and the next twelve months sketched either way.</td></tr>
+</table>
+
+<h2>Risks and how this plan handles them</h2>
+<ul>
+  <li><strong>Course completion mistaken for competence.</strong> Nothing in this plan is satisfied by finishing a course. Every acceptance criterion names an artefact, a measurement or a reaction from another engineer.</li>
+  <li><strong>Overrunning phases.</strong> If a phase runs long, cut its scope and keep the gate date. Gates are the enforcement mechanism for the whole plan.</li>
+  <li><strong>Hardware blocking progress.</strong> Phase 5 stalls if the board or probe misbehaves. Mitigation: pick a board with a first-class Zephyr board page from day one, and order it in week 4.</li>
+  <li><strong>Learning in isolation.</strong> Weeks 7, 23, 30 and 32 force contact with other engineers. Without review, you can hold a wrong mental model for six months without noticing.</li>
+  <li><strong>Concurrency of life.</strong> 6 to 8 hours a week for 34 weeks is about 210 to 270 hours. Below 4 hours a week this becomes a three-year project and usually fails; if that is the real constraint, halve the scope and double the timeline deliberately rather than quietly.</li>
+</ul>
+
+<h2>What this plan cannot do</h2>
+<p>It cannot certify competence, and it does not constitute a documented development commitment from your employer. Movement into a specific team depends on headcount, business need and your manager's decision, none of which this plan controls. It also does not replace hands-on time on production firmware with real customers and real schedules; that only comes with the role, and the honest framing to a hiring manager is exactly that.</p>
+
+<p class="note">Plan assumes weeks 1 to 3 are completed as written and unchanged. Time budget 6 to 8 hours per week from week 4. Artefact and acceptance criteria are designed to be independently verifiable. Prepared 4 November 2026.</p>
+
+</main>
+</html>
